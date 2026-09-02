@@ -1,12 +1,23 @@
 const API = {
   csrf: null,
-  async token() { if (!this.csrf) this.csrf = (await fetch('/api/auth/csrf', { credentials: 'same-origin' }).then(r => r.json())).csrfToken; return this.csrf; },
+  async parse(response) {
+    const text = await response.text();
+    try { return text ? JSON.parse(text) : {}; } catch { return { error: text || 'The server returned an invalid response.' }; }
+  },
+  async token() {
+    if (this.csrf) return this.csrf;
+    const response = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+    const data = await this.parse(response);
+    if (!response.ok || !data.csrfToken) { const error = new Error(data.error || 'Unable to initialize the secure session.'); error.status = response.status; throw error; }
+    this.csrf = data.csrfToken;
+    return this.csrf;
+  },
   async request(url, options = {}) {
     if (location.protocol === 'file:') throw new Error('Open AccessGuard at http://localhost:3000 after running npm run dev. Do not open the HTML files directly.');
     const method = (options.method || 'GET').toUpperCase(); const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     if (!['GET', 'HEAD'].includes(method)) headers['X-CSRF-Token'] = await this.token();
     const response = await fetch(`/api${url}`, { credentials: 'same-origin', ...options, method, headers });
-    const data = await response.json().catch(() => ({}));
+    const data = await this.parse(response);
     if (!response.ok) { const error = new Error(data.error || 'Request failed.'); error.status = response.status; throw error; }
     return data;
   }

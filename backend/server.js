@@ -28,12 +28,19 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: false, credentials: true }));
 app.use(express.json({ limit: '20kb' }));
 app.use(session({ secret: process.env.SESSION_SECRET || 'development-secret-change-me', resave: false, saveUninitialized: false, cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 1000 * 60 * 60 * 8 } }));
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }));
+const authenticationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: process.env.NODE_ENV === 'production' ? 10 : 100,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => res.status(429).json({ error: 'Too many sign-in attempts. Please wait 15 minutes before trying again.' })
+});
 
 const publicUser = (user) => user && ({ id: user.id, fullName: user.full_name, username: user.username, email: user.email, role: user.role, status: user.status, createdAt: user.created_at, lastLogin: user.last_login });
 const validText = (value, min, max) => typeof value === 'string' && value.trim().length >= min && value.trim().length <= max && !/[<>]/.test(value);
 app.get('/api/auth/csrf', csrfToken);
-app.post('/api/auth/register', requireCsrf, async (req, res, next) => { try {
+app.post('/api/auth/register', authenticationLimiter, requireCsrf, async (req, res, next) => { try {
   const { fullName, username, email, password } = req.body;
   if (!validText(fullName, 2, 100) || !/^[a-zA-Z0-9_]{3,30}$/.test(username || '') || !/^\S+@\S+\.\S+$/.test(email || '') || !validText(password, 8, 128)) return res.status(400).json({ error: 'Provide a name, valid username and email, and a password of at least 8 characters.' });
   const exists = db.prepare('SELECT 1 FROM users WHERE username = ? OR email = ?').get(username.trim(), email.trim().toLowerCase());
@@ -43,7 +50,7 @@ app.post('/api/auth/register', requireCsrf, async (req, res, next) => { try {
   req.session.userId = result.lastInsertRowid; req.session.csrfToken = undefined;
   res.status(201).json({ user: publicUser(getUser(result.lastInsertRowid)) });
 } catch (error) { next(error); } });
-app.post('/api/auth/login', requireCsrf, async (req, res, next) => { try {
+app.post('/api/auth/login', authenticationLimiter, requireCsrf, async (req, res, next) => { try {
   const identifier = String(req.body.identifier || '').trim(); const password = String(req.body.password || '');
   const user = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?').get(identifier, identifier.toLowerCase());
   if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'Invalid credentials.' });
@@ -93,7 +100,7 @@ app.get('/admin', (req, res) => {
   if (!user || user.role !== 'ADMIN') return res.status(403).sendFile(path.join(__dirname, '..', 'frontend', '403.html'));
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dashboard.html'));
 });
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'landing.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html')));
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use('/api', (req, res) => res.status(404).json({ error: 'API endpoint not found.' }));
 app.use((req, res) => res.status(404).sendFile(path.join(__dirname, '..', 'frontend', '404.html')));

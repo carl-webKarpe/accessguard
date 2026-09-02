@@ -1,1 +1,151 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create account | AccessGuard</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="css/styles.css"></head><body class="grid-bg min-h-screen bg-slate-950"><main class="mx-auto flex min-h-screen max-w-md items-center px-6"><form id="form" class="w-full rounded-lg border border-slate-700 bg-slate-900 p-8 text-white shadow-2xl"><a href="index.html" class="text-xl font-extrabold">Access<span class="text-blue-400">Guard</span></a><h1 class="mt-8 text-3xl font-extrabold">Create your account</h1><p id="error" class="mt-5 hidden rounded bg-rose-500/20 p-3 text-sm text-rose-200"></p><div class="mt-6 grid gap-4"><label class="text-sm font-bold">Full name<input name="fullName" required class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3"></label><label class="text-sm font-bold">Username<input name="username" required pattern="[A-Za-z0-9_]{3,30}" class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3"></label><label class="text-sm font-bold">Email<input name="email" type="email" required class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3"></label><label class="text-sm font-bold">Password<input name="password" type="password" minlength="8" required class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3"></label></div><button class="mt-7 w-full rounded bg-blue-600 py-3 font-bold">Create Account</button><p class="mt-5 text-center text-sm text-slate-400">Already registered? <a href="login.html" class="font-bold text-blue-400">Sign in</a></p></form></main><script src="js/api.js"></script><script>document.querySelector('#form').onsubmit=async e=>{e.preventDefault();try{await API.request('/auth/register',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});location.href='dashboard.html'}catch(x){const p=document.querySelector('#error');p.textContent=x.message;p.classList.remove('hidden')}}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create account — AccessGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  :root{
+    --ink-950:#0B0E14; --ink-900:#11151D; --ink-800:#171C26; --ink-border:#262C39;
+    --amber:#E7A33E; --amber-glow:rgba(231,163,62,.45); --deny:#C65B53; --radius:3px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:var(--ink-950); color:#EDEEF2;
+    font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+  h1,h2,.logo{ font-family:'Sora',sans-serif; letter-spacing:-0.01em; }
+  a{ color:inherit; }
+  main{
+    min-height:100vh; display:grid; grid-template-columns:1fr 1fr; align-items:center;
+    max-width:1180px; margin:0 auto; padding:40px 24px; gap:60px;
+  }
+  @media (max-width:880px){ main{ grid-template-columns:1fr; padding:32px 20px; } .side{ display:none; } }
+
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:17px; }
+  .logo b{ color:var(--amber); font-weight:600; }
+
+  .side .kicker{ font-size:13px; font-weight:500; color:#9DA3B0; margin:56px 0 16px; }
+  .side h1{ font-size:clamp(30px,3.6vw,42px); line-height:1.14; font-weight:700; margin:0; }
+  .side ul{ list-style:none; margin:40px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
+  .side li{ display:flex; align-items:center; gap:10px; font-size:14.5px; color:#B7BBC6; }
+  .side li i{ width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); flex-shrink:0; }
+
+  form{
+    background:var(--ink-900); border:1px solid var(--ink-border); border-radius:6px;
+    padding:34px 32px; max-width:420px; width:100%; justify-self:center;
+  }
+  form .mobile-logo{ display:none; margin-bottom:22px; }
+  @media (max-width:880px){ form .mobile-logo{ display:flex; } }
+  form .kicker{ font-size:13px; font-weight:500; color:var(--amber); margin:0 0 8px; }
+  form h2{ font-size:26px; margin:0; font-weight:700; }
+  form p.lead{ font-size:14.5px; color:#8B92A3; margin:8px 0 0; }
+
+  #error{
+    display:none; margin-top:18px; padding:11px 14px; border-radius:var(--radius);
+    background:rgba(198,91,83,.14); border:1px solid rgba(198,91,83,.4);
+    color:#E6A39E; font-size:13.5px;
+  }
+  #error.show{ display:block; }
+
+  label{ display:block; margin-top:18px; font-size:13.5px; font-weight:600; color:#C7CAD3; }
+  label span.hint{ font-weight:400; color:#6B7280; }
+  label input{
+    display:block; width:100%; margin-top:7px; padding:11px 13px;
+    background:var(--ink-800); border:1px solid var(--ink-border); border-radius:var(--radius);
+    color:#EDEEF2; font-family:'Inter'; font-size:14.5px; outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  label input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); }
+  label input:invalid:not(:placeholder-shown){ border-color:var(--deny); }
+
+  .btn-submit{
+    width:100%; margin-top:24px; padding:12px; border:none; border-radius:var(--radius);
+    background:var(--amber); color:#241705; font-family:'Inter'; font-weight:700; font-size:14.5px; cursor:pointer;
+    transition:background .15s ease;
+  }
+  .btn-submit:hover{ background:#f0b358; }
+  .btn-submit:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .switch-line{ margin-top:18px; text-align:center; font-size:13.5px; color:#8B92A3; }
+  .switch-line a{ font-weight:600; color:var(--amber); }
+</style>
+</head>
+<body>
+<main>
+  <section class="side">
+    <a href="/" class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2 3 6.5V13c0 6.2 4.2 9.6 10 11 5.8-1.4 10-4.8 10-11V6.5L13 2Z" stroke="#E7A33E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 13.2l2.4 2.4 4.6-5.1" stroke="#E7A33E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Access<b>Guard</b>
+    </a>
+    <p class="kicker">Identity security platform</p>
+    <h1>Create an account,<br>get a role from day one.</h1>
+    <ul>
+      <li><i></i>Every new account starts scoped to a role</li>
+      <li><i></i>Permissions are never assumed, only granted</li>
+      <li><i></i>An admin can adjust access at any time</li>
+    </ul>
+  </section>
+
+  <form id="form">
+    <div class="logo mobile-logo">
+      <svg width="24" height="24" viewBox="0 0 26 26" fill="none"><path d="M13 2 3 6.5V13c0 6.2 4.2 9.6 10 11 5.8-1.4 10-4.8 10-11V6.5L13 2Z" stroke="#E7A33E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 13.2l2.4 2.4 4.6-5.1" stroke="#E7A33E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Access<b>Guard</b>
+    </div>
+    <p class="kicker">Create account</p>
+    <h2>Set up your access</h2>
+    <p class="lead">Register to get a role-scoped AccessGuard account.</p>
+
+    <p id="error"></p>
+
+    <label>Full name
+      <input name="fullName" required autocomplete="name">
+    </label>
+    <label>Username <span class="hint">— letters, numbers, underscores</span>
+      <input name="username" required pattern="[A-Za-z0-9_]{3,30}" autocomplete="username">
+    </label>
+    <label>Email
+      <input name="email" type="email" required autocomplete="email">
+    </label>
+    <label>Password <span class="hint">— at least 8 characters</span>
+      <input name="password" type="password" minlength="8" required autocomplete="new-password">
+    </label>
+
+    <button class="btn-submit" type="submit">Create account</button>
+    <p class="switch-line">Already registered? <a href="login.html">Sign in</a></p>
+  </form>
+</main>
+
+<script src="js/api.js"></script>
+<script>
+  const form = document.querySelector('#form');
+  const errorEl = document.querySelector('#error');
+  const submitBtn = form.querySelector('.btn-submit');
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    errorEl.classList.remove('show');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account…';
+    try {
+      await API.request('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+      });
+      location.href = 'dashboard.html';
+    } catch (x) {
+      errorEl.textContent = x.message;
+      errorEl.classList.add('show');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+    }
+  };
+</script>
+</body>
+</html>

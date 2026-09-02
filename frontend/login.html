@@ -1,1 +1,179 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in | AccessGuard</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="css/styles.css"></head><body class="grid-bg min-h-screen bg-slate-950"><main class="mx-auto grid min-h-screen max-w-6xl items-center gap-12 px-6 py-10 lg:grid-cols-2"><section class="hidden text-white lg:block"><a href="index.html" class="text-xl font-extrabold">⌾ Access<span class="text-blue-400">Guard</span></a><p class="mono mt-16 text-xs font-bold tracking-[.2em] text-blue-300">SECURE IDENTITY PLATFORM</p><h1 class="mt-5 text-5xl font-extrabold leading-tight">Security begins with<br><span class="text-blue-400">the right access.</span></h1><div class="mt-10 space-y-4 text-sm text-slate-300"><p><i class="secure-dot"></i>Authentication verified</p><p><i class="secure-dot"></i>Role permissions enforced</p><p><i class="secure-dot"></i>Activity monitoring enabled</p></div></section><form id="form" class="w-full rounded-lg border border-slate-700 bg-slate-900 p-8 text-white shadow-2xl"><a href="index.html" class="text-xl font-extrabold lg:hidden">⌾ Access<span class="text-blue-400">Guard</span></a><p class="mono mt-6 text-xs tracking-widest text-blue-300">SECURE SIGN IN</p><h1 class="mt-3 text-3xl font-extrabold">Welcome back</h1><p class="mt-2 text-sm text-slate-400">Sign in to your secure workspace.</p><p id="error" class="mt-5 hidden rounded bg-rose-500/20 p-3 text-sm text-rose-200"></p><label class="mt-6 block text-sm font-bold">Username or email<input name="identifier" required autocomplete="username" class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3 outline-none focus:border-blue-400"></label><label class="mt-4 block text-sm font-bold">Password<input name="password" type="password" required autocomplete="current-password" class="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-3 py-3 outline-none focus:border-blue-400"></label><button class="mt-7 w-full rounded bg-blue-600 py-3 font-bold hover:bg-blue-500">Sign In</button><div class="mt-7 rounded border border-slate-700 bg-slate-800/60 p-4 text-xs text-slate-400"><b class="block text-slate-200">Demo accounts</b><p class="mt-2">Admin: <b>admin</b> / <b>admin123</b></p><p>Staff: <b>staff</b> / <b>staff123</b></p></div><p class="mt-5 text-center text-sm text-slate-400">New here? <a href="register.html" class="font-bold text-blue-400">Create an account</a></p></form></main><script src="js/api.js"></script><script>document.querySelector('#form').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;b.textContent='Signing in...';try{await API.request('/auth/login',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});location.href='dashboard.html'}catch(x){const p=document.querySelector('#error');p.textContent=x.message;p.classList.remove('hidden');b.disabled=false;b.textContent='Sign In'}}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in — AccessGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  :root{
+    --ink-950:#0B0E14; --ink-900:#11151D; --ink-800:#171C26; --ink-border:#262C39;
+    --amber:#E7A33E; --amber-glow:rgba(231,163,62,.45); --deny:#C65B53; --radius:3px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:var(--ink-950); color:#EDEEF2;
+    font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+  h1,h2,.logo{ font-family:'Sora',sans-serif; letter-spacing:-0.01em; }
+  a{ color:inherit; }
+  main{
+    min-height:100vh; display:grid; grid-template-columns:1fr 1fr; align-items:center;
+    max-width:1180px; margin:0 auto; padding:40px 24px; gap:60px;
+  }
+  @media (max-width:880px){ main{ grid-template-columns:1fr; padding:32px 20px; } .side{ display:none; } }
+
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:17px; }
+  .logo b{ color:var(--amber); font-weight:600; }
+
+  .side .kicker{ font-size:13px; font-weight:500; color:#9DA3B0; margin:56px 0 16px; }
+  .side h1{ font-size:clamp(30px,3.6vw,42px); line-height:1.14; font-weight:700; margin:0; }
+  .side ul{ list-style:none; margin:40px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
+  .side li{ display:flex; align-items:center; gap:10px; font-size:14.5px; color:#B7BBC6; }
+  .side li i{ width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); flex-shrink:0; }
+
+  form{
+    background:var(--ink-900); border:1px solid var(--ink-border); border-radius:6px;
+    padding:34px 32px; max-width:420px; width:100%; justify-self:center;
+  }
+  form .mobile-logo{ display:none; margin-bottom:22px; }
+  @media (max-width:880px){ form .mobile-logo{ display:flex; } }
+  form .kicker{ font-size:13px; font-weight:500; color:var(--amber); margin:0 0 8px; }
+  form h2{ font-size:26px; margin:0; font-weight:700; }
+  form p.lead{ font-size:14.5px; color:#8B92A3; margin:8px 0 0; }
+
+  #error{
+    display:none; margin-top:18px; padding:11px 14px; border-radius:var(--radius);
+    background:rgba(198,91,83,.14); border:1px solid rgba(198,91,83,.4);
+    color:#E6A39E; font-size:13.5px;
+  }
+  #error.show{ display:block; }
+
+  label{ display:block; margin-top:18px; font-size:13.5px; font-weight:600; color:#C7CAD3; }
+  label input{
+    display:block; width:100%; margin-top:7px; padding:11px 13px;
+    background:var(--ink-800); border:1px solid var(--ink-border); border-radius:var(--radius);
+    color:#EDEEF2; font-family:'Inter'; font-size:14.5px; outline:none;
+  }
+  label input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); }
+
+  .row{ display:flex; align-items:center; justify-content:space-between; margin-top:16px; font-size:13.5px; color:#8B92A3; }
+  .row label.check{ display:flex; align-items:center; gap:8px; font-weight:400; margin:0; color:inherit; }
+  .row label.check input{ width:auto; margin:0; accent-color:var(--amber); }
+  #forgot{ background:none; border:none; padding:0; color:var(--amber); font-weight:600; font-size:13.5px; cursor:pointer; font-family:'Inter'; }
+
+  .btn-submit{
+    width:100%; margin-top:22px; padding:12px; border:none; border-radius:var(--radius);
+    background:var(--amber); color:#241705; font-family:'Inter'; font-weight:700; font-size:14.5px; cursor:pointer;
+  }
+  .btn-submit:hover{ background:#f0b358; }
+
+  .switch-line{ margin-top:20px; text-align:center; font-size:13.5px; color:#8B92A3; }
+  .switch-line a{ font-weight:600; color:var(--amber); }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink-900); border:1px solid var(--ink-border); color:#fff;
+    padding:12px 20px; border-radius:var(--radius); font-size:14px; font-weight:500;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:80;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+    align-items:center; justify-content:center; z-index:90; padding:20px;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal-box{
+    background:#fff; color:#1B1F27; border-radius:6px; padding:26px 28px; max-width:380px; width:100%;
+  }
+  .modal-box h3{ margin:0 0 12px; font-family:'Sora'; font-size:18px; }
+  .modal-box .close-modal{ margin-top:18px; background:var(--amber); border:none; color:#241705; font-weight:700; padding:9px 16px; border-radius:var(--radius); cursor:pointer; font-family:'Inter'; }
+</style>
+</head>
+<body>
+<main>
+  <section class="side">
+    <a href="/" class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2 3 6.5V13c0 6.2 4.2 9.6 10 11 5.8-1.4 10-4.8 10-11V6.5L13 2Z" stroke="#E7A33E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 13.2l2.4 2.4 4.6-5.1" stroke="#E7A33E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Access<b>Guard</b>
+    </a>
+    <p class="kicker">Identity security platform</p>
+    <h1>Sign in to see<br>what your role allows.</h1>
+    <ul>
+      <li><i></i>Identity verified before anything loads</li>
+      <li><i></i>Role permissions enforced on every action</li>
+      <li><i></i>Activity monitored as it happens</li>
+    </ul>
+  </section>
+
+  <form id="login">
+    <div class="logo mobile-logo">
+      <svg width="24" height="24" viewBox="0 0 26 26" fill="none"><path d="M13 2 3 6.5V13c0 6.2 4.2 9.6 10 11 5.8-1.4 10-4.8 10-11V6.5L13 2Z" stroke="#E7A33E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 13.2l2.4 2.4 4.6-5.1" stroke="#E7A33E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Access<b>Guard</b>
+    </div>
+    <p class="kicker">Secure sign in</p>
+    <h2>Welcome back</h2>
+    <p class="lead">Sign in to your AccessGuard account.</p>
+
+    <p id="error"></p>
+
+    <label>Email or username
+      <input name="identifier" required autocomplete="username">
+    </label>
+    <label>Password
+      <input name="password" type="password" required autocomplete="current-password">
+    </label>
+
+    <div class="row">
+      <label class="check"><input name="remember" type="checkbox"> Remember me</label>
+      <button type="button" id="forgot">Forgot password?</button>
+    </div>
+
+    <button class="btn-submit" type="submit">Sign in</button>
+
+    <p class="switch-line">Don't have an account? <a href="register.html">Create one</a></p>
+  </form>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  const errorEl = document.querySelector('#error');
+  const submitButton = document.querySelector('.btn-submit');
+  API.request('/auth/me').then(() => location.replace('dashboard.html')).catch(() => {});
+  document.querySelector('#login').onsubmit = async (e) => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(e.target));
+    errorEl.classList.remove('show');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Signing in...';
+    try {
+      await API.request('/auth/login', { method: 'POST', body: JSON.stringify({ identifier: v.identifier, password: v.password }) });
+      location.replace('dashboard.html');
+    } catch (error) {
+      errorEl.textContent = error.message;
+      errorEl.classList.add('show');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Sign in';
+    }
+  };
+
+  document.querySelector('#forgot').onclick = () => {
+    const backdrop = document.getElementById('modal-backdrop');
+    document.getElementById('modal-box').innerHTML = '<h3>Password help</h3><p style="font-size:14px;color:#4B5563;line-height:1.6;">Contact an administrator to reset your password.</p><button class="close-modal" id="close-modal">Close</button>';
+    backdrop.classList.add('show');
+    document.getElementById('close-modal').onclick = () => backdrop.classList.remove('show');
+  };
+</script>
+</body>
+</html>
